@@ -36,6 +36,7 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     runtimeOnly 'com.h2database:h2'
+//    implementation 'org.hibernate.orm:hibernate-core'
 }
 
 tasks.named('test') {

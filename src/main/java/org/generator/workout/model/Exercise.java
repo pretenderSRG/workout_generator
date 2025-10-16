@@ -1,5 +1,7 @@
 package org.generator.workout.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -35,6 +37,7 @@ public class Exercise {
     private Integer sets;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonBackReference("exercise-inDays")
     private List<ExerciseInDay> inDays = new ArrayList<>();
 
     public Exercise(String name, String description, EquipmentType equipment, MuscleGroup muscleGroup, String reps, Integer sets) {

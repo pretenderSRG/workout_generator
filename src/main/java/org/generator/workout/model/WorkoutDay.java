@@ -1,5 +1,7 @@
 package org.generator.workout.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,9 +24,11 @@ public class WorkoutDay {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "program_id", nullable = false)
+    @JsonBackReference("program-days")
     private WorkoutProgram program;
 
     @OneToMany(mappedBy = "day", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("day-exercises")
     private List<ExerciseInDay> exercises = new ArrayList<>();
 
     public WorkoutDay() {
