@@ -1,5 +1,6 @@
 package org.generator.workout.controller;
 
+import org.generator.workout.dto.WorkoutProgramResponse;
 import org.generator.workout.model.EquipmentType;
 import org.generator.workout.model.WorkoutProgram;
 import org.generator.workout.service.WorkoutGeneratorService;
@@ -19,7 +20,7 @@ public class WorkoutController {
     }
 
     @PostMapping("/generate")
-    public WorkoutProgram generateProgram(
+    public WorkoutProgramResponse generateProgram(
             @RequestParam EquipmentType equipment,
             @RequestParam(defaultValue = "3") int daysPerWeek) {
         return generatorService.generateProgram(equipment, daysPerWeek);

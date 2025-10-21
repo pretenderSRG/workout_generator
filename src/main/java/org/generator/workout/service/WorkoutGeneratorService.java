@@ -1,5 +1,9 @@
 package org.generator.workout.service;
 
+import org.generator.workout.dto.ExerciseInDayResponse;
+import org.generator.workout.dto.ExerciseResponse;
+import org.generator.workout.dto.WorkoutDayResponse;
+import org.generator.workout.dto.WorkoutProgramResponse;
 import org.generator.workout.model.*;
 import org.generator.workout.repository.ExerciseRepository;
 import org.generator.workout.repository.WorkoutProgramRepository;
@@ -7,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -21,7 +26,7 @@ public class WorkoutGeneratorService {
         this.programRepository = programRepository;
     }
 
-    public WorkoutProgram generateProgram(EquipmentType equipment, int daysPerWeek) {
+    public WorkoutProgramResponse generateProgram(EquipmentType equipment, int daysPerWeek) {
         List<Exercise> exercises =  exerciseRepository.findByEquipment(equipment);
 
         if (exercises.isEmpty()) {
@@ -45,6 +50,36 @@ public class WorkoutGeneratorService {
             }
         }
 
-        return programRepository.save(program);
+        WorkoutProgram savedProgram =  programRepository.save(program);
+
+        List<WorkoutDayResponse> dayResponses = savedProgram.getDays().stream()
+                .map(day -> new WorkoutDayResponse(
+                        day.getId(),
+                        day.getDayNumber(),
+                        day.getExercises().stream()
+                                .map(exInDay -> new ExerciseInDayResponse(
+                                        exInDay.getId(),
+                                        new ExerciseResponse(
+                                                exInDay.getExercise().getId(),
+                                                exInDay.getExercise().getName(),
+                                                exInDay.getExercise().getDescription(),
+                                                exInDay.getExercise().getEquipment().name(),
+                                                exInDay.getExercise().getMuscleGroup().name(),
+                                                exInDay.getExercise().getReps(),
+                                                exInDay.getExercise().getSets()
+                                        ),
+                                        exInDay.getOrderInDay()
+                                ))
+                                .collect(Collectors.toList())
+                ))
+                .toList();
+        return new WorkoutProgramResponse(
+                savedProgram.getId(),
+                savedProgram.getName(),
+                savedProgram.getEquipmentType().name(),
+                savedProgram.getDaysPerWeek(),
+                savedProgram.getCreatedAt(),
+                dayResponses
+        );
     }
 }
