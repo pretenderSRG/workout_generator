@@ -32,6 +32,10 @@ public class WorkoutProgram {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private AppUser user;
+
     @OneToMany(mappedBy = "program", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference("program-days")
     private List<WorkoutDay> days = new ArrayList<>();
