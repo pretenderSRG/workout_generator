@@ -5,6 +5,7 @@ import org.generator.workout.dto.ExerciseResponse;
 import org.generator.workout.dto.WorkoutDayResponse;
 import org.generator.workout.dto.WorkoutProgramResponse;
 import org.generator.workout.model.*;
+import org.generator.workout.repository.AppUserRepository;
 import org.generator.workout.repository.ExerciseRepository;
 import org.generator.workout.repository.WorkoutProgramRepository;
 import org.springframework.stereotype.Service;
@@ -19,22 +20,29 @@ public class WorkoutGeneratorService {
 
     private final ExerciseRepository exerciseRepository;
     private final WorkoutProgramRepository programRepository;
+    private final AppUserRepository userRepository;
 
     public WorkoutGeneratorService(ExerciseRepository exerciseRepository,
-                                   WorkoutProgramRepository programRepository) {
+                                   WorkoutProgramRepository programRepository,
+                                   AppUserRepository userRepository) {
         this.exerciseRepository = exerciseRepository;
         this.programRepository = programRepository;
+        this.userRepository = userRepository;
     }
 
-    public WorkoutProgramResponse generateProgram(EquipmentType equipment, int daysPerWeek) {
+    public WorkoutProgramResponse generateProgram(Long userId, EquipmentType equipment, int daysPerWeek) {
+        System.out.println("Generating program for user ID: " + userId);
+        AppUser user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+
         List<Exercise> exercises =  exerciseRepository.findByEquipment(equipment);
 
         if (exercises.isEmpty()) {
-            throw new IllegalArgumentException("No exercises found fir equipment: " + equipment);
+            throw new IllegalArgumentException("No exercises found for equipment: " + equipment);
         }
 
         String programName = String.format("My %d-day %s program", daysPerWeek, equipment.name());
-        WorkoutProgram program = new WorkoutProgram(programName, equipment, daysPerWeek);
+        WorkoutProgram program = new WorkoutProgram(programName, equipment, daysPerWeek, user);
 
         int exercisesPerDay = Math.min(4, (int) Math.ceil((double) exercises.size() / daysPerWeek));
         int exercisesIndex = 0;

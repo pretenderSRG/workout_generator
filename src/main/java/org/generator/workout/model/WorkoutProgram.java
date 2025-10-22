@@ -45,10 +45,12 @@ public class WorkoutProgram {
 
     public WorkoutProgram(String name,
                           EquipmentType equipmentType,
-                          Integer daysPerWeek) {
+                          Integer daysPerWeek,
+                          AppUser user) {
         this.name = name;
         this.equipmentType = equipmentType;
         this.daysPerWeek = daysPerWeek;
+        this.user = user;
     }
 
 }

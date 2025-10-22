@@ -31,7 +31,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/workouts/generate").authenticated()
                         .anyRequest().permitAll()
                 )
-                .httpBasic(Customizer.withDefaults());
+                .httpBasic();
         return http.build();
     }
 
