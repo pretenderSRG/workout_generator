@@ -90,4 +90,45 @@ public class WorkoutGeneratorService {
                 dayResponses
         );
     }
+
+    public List<WorkoutProgramResponse> getUserWorkoutProgram(Long userId) {
+        AppUser user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+
+        List<WorkoutProgram> programs = programRepository.findByUser(user);
+
+        return programs.stream()
+                .map(program -> {
+                    List<WorkoutDayResponse> dayResponses = program.getDays().stream()
+                            .map(day -> new WorkoutDayResponse(
+                                    day.getId(),
+                                    day.getDayNumber(),
+                                    day.getExercises().stream()
+                                            .map(exerciseInDay -> new ExerciseInDayResponse(
+                                                    exerciseInDay.getId(),
+                                                    new ExerciseResponse(
+                                                            exerciseInDay.getExercise().getId(),
+                                                            exerciseInDay.getExercise().getName(),
+                                                            exerciseInDay.getExercise().getDescription(),
+                                                            exerciseInDay.getExercise().getEquipment().name(),
+                                                            exerciseInDay.getExercise().getMuscleGroup().name(),
+                                                            exerciseInDay.getExercise().getReps(),
+                                                            exerciseInDay.getExercise().getSets()
+                                                    ),
+                                                    exerciseInDay.getOrderInDay()
+                                                    ))
+                                            .toList()
+                                    ))
+                            .toList();
+                          return new WorkoutProgramResponse(
+                                  program.getId(),
+                                  program.getName(),
+                                  program.getEquipmentType().name(),
+                                  program.getDaysPerWeek(),
+                                  program.getCreatedAt(),
+                                  dayResponses
+                          );
+
+                }).toList();
+    }
 }

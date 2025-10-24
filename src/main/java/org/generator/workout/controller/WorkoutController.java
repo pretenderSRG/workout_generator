@@ -6,10 +6,9 @@ import org.generator.workout.dto.WorkoutProgramResponse;
 import org.generator.workout.model.EquipmentType;
 import org.generator.workout.service.WorkoutGeneratorService;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/workouts")
@@ -21,6 +20,17 @@ public class WorkoutController {
     public WorkoutController(WorkoutGeneratorService generatorService, AppUserRepository userRepository) {
         this.generatorService = generatorService;
         this.userRepository = userRepository;
+    }
+
+    @GetMapping
+    public List<WorkoutProgramResponse> getUserWorkoutPrograms() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+
+        Long userId = userRepository.findAppUserByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + username)).getId();
+
+        return generatorService.getUserWorkoutProgram(userId);
     }
 
     @PostMapping("/generate")

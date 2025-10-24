@@ -39,6 +39,12 @@ dependencies {
 //    implementation 'org.hibernate.orm:hibernate-core'
 }
 
+task runH2Server(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.h2.tools.Server'
+    args = ['-tcp', '-web', '-tcpAllowOthers', '-tcpPort', '9092', '-webPort', '8082']
+}
+
 tasks.named('test') {
     useJUnitPlatform()
 }
