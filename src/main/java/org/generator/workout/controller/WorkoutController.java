@@ -5,6 +5,7 @@ import org.generator.workout.dto.WorkoutDayResponse;
 import org.generator.workout.model.WorkoutProgram;
 import org.generator.workout.repository.AppUserRepository;
 import org.generator.workout.repository.WorkoutProgramRepository;
+import org.generator.workout.service.SmartWorkoutGeneratorService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.generator.workout.dto.WorkoutProgramResponse;
@@ -21,11 +22,13 @@ public class WorkoutController {
 
     private final WorkoutGeneratorService generatorService;
     private final AppUserRepository userRepository;
+    private final SmartWorkoutGeneratorService smartGeneratorService;
 
     public WorkoutController(WorkoutGeneratorService generatorService,
-                             AppUserRepository userRepository) {
+                             AppUserRepository userRepository, SmartWorkoutGeneratorService smartGeneratorService) {
         this.generatorService = generatorService;
         this.userRepository = userRepository;
+        this.smartGeneratorService = smartGeneratorService;
     }
 
     private Long getUserId() {
@@ -60,5 +63,14 @@ public class WorkoutController {
             @RequestParam(defaultValue = "3") int daysPerWeek) {
 
         return generatorService.generateProgram(getUserId(), equipment, daysPerWeek);
+    }
+
+    @PostMapping("/generate-smart")
+    public WorkoutProgramResponse generateSmartWorkout(
+            @RequestParam EquipmentType equipment,
+            @RequestParam(defaultValue = "3") int daysPerWeek,
+            @RequestParam(defaultValue = "PPL") String splitType) {
+        Long userId = getUserId();
+        return smartGeneratorService.generateSmartProgram(userId, equipment, daysPerWeek, splitType);
     }
 }
