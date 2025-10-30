@@ -131,4 +131,54 @@ public class WorkoutGeneratorService {
 
                 }).toList();
     }
+
+    public WorkoutProgramResponse getWorkoutProgramById(Long userId, Long programId) {
+        AppUser user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+
+        WorkoutProgram program = programRepository.findByIdAndUser(programId, user)
+                .orElseThrow(() -> new IllegalArgumentException("Program not found or access denied: " + programId));
+
+        List<WorkoutDayResponse> dayResponses = program.getDays().stream()
+            .map(day -> new WorkoutDayResponse(
+                day.getId(),
+                day.getDayNumber(),
+                day.getExercises().stream()
+                    .map(exInDay -> new ExerciseInDayResponse(
+                        exInDay.getId(),
+                        new ExerciseResponse(
+                            exInDay.getExercise().getId(),
+                            exInDay.getExercise().getName(),
+                            exInDay.getExercise().getDescription(),
+                            exInDay.getExercise().getEquipment().name(),
+                            exInDay.getExercise().getMuscleGroup().name(),
+                            exInDay.getExercise().getReps(),
+                            exInDay.getExercise().getSets()
+                        ),
+                        exInDay.getOrderInDay()
+                    ))
+                    .collect(Collectors.toList())
+            ))
+            .collect(Collectors.toList());
+
+        return new WorkoutProgramResponse(
+            program.getId(),
+            program.getName(),
+            program.getEquipmentType().name(),
+            program.getDaysPerWeek(),
+            program.getCreatedAt(),
+            dayResponses
+        );
+    }
+
+    public void deleteWorkoutProgramById(Long userId, Long programId) {
+        AppUser user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+
+       WorkoutProgram program = programRepository.findByIdAndUser(programId, user)
+               .orElseThrow(() -> new IllegalArgumentException("Program not found or access denied: " + programId));
+
+       programRepository.delete(program);
+
+    }
 }
