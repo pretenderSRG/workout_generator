@@ -1,52 +1,23 @@
-# Fitness Program Generator (Basic API)
+# Fitness Program Generator (Smart-Generation)
 
-A Spring Boot REST API for generating personalized fitness programs based on equipment and schedule.
+An enhanced version of the Fitness Program Generator with **intelligent workout generation** based on rules, muscle group balancing, and user preferences.
 
 ## Features
 
-- User registration and authentication (HTTP Basic)
-- Generate workout programs by equipment type and days per week
-- Store programs in database (H2) linked to users
-- Retrieve all workout programs for authenticated user
-- Clean JSON responses using DTOs (no circular references)
+- All features from [basic-api](../basic-api) branch:
+  - User registration and authentication
+  - Generate workout programs by equipment and days per week
+  - Retrieve, update, and delete workout programs
+- **Smart workout generation**:
+  - Balances muscle groups across days
+  - Implements Push/Pull/Legs (PPL) or other training splits
+  - Avoids repetitive exercises in adjacent days
+  - Considers exercise difficulty and equipment availability
+- **Rule-based engine** for creating balanced and effective programs
 
 ## Endpoints
-
-### Authentication
-
-- `POST /api/auth/register`  
-  Register a new user  
-  Body: `{"username": "string", "password": "string"}`
-
-### Workout Programs
-
-- `POST /api/workouts/generate?equipment={type}&daysPerWeek={num}`  
-  Generate a new workout program  
-  Requires authentication
-
-- `GET /api/workouts`  
-  Get all workout programs for authenticated user  
-  Requires authentication
-
-### Equipment Types
-
-- `BODYWEIGHT`
-- `DUMBBELLS`
-- `BARBELL`
-- `RESISTANCE_BANDS`
-- `GYM`
-
-## Running
-
-```bash
-./gradlew bootRun
-
-```
-
-## Database
-- H2 file-based database stored in `./data/fitnessdb`
-- Access H2 Console at: `http://localhost:8080/h2-console`
-(Stop the app first to access the database)
+Same as [basic-api](../basic-api), with potential future additions for:
+- `POST /api/workouts/generate-smart` - Generate a program using smart rules
 
 
 ## Tech Stack
@@ -57,21 +28,12 @@ A Spring Boot REST API for generating personalized fitness programs based on equ
 - Hibernate
 - H2 Database
 - Lombok
-- Jackson (DTO serialization)
+- Jackson
 
 ## Example Request
-```bash
-# Register user
-curl -X POST http://localhost:8080/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"username": "1", "password": "password"}'
+Same as [basic-api](../basic-api) , but the generation logic will be smarter.
 
-# Generate program (requires Basic Auth)
-curl -X POST "http://localhost:8080/api/workouts/generate?equipment=GYM&daysPerWeek=4" \
-  -H "Authorization: Basic MTpwYXNzd29yZA==" \
-  -H "Content-Type: application/json"
-
-# Get all programs
-curl -X GET "http://localhost:8080/api/workouts" \
-  -H "Authorization: Basic MTpwYXNzd29yZA=="
-```
+## Next Steps
+- Implement PPL (Push/Pull/Legs) split logic
+- Add exercise difficulty and category (compound/isolation)
+- Integrate with a frontend (optional)
