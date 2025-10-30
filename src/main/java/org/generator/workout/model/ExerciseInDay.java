@@ -26,6 +26,10 @@ public class ExerciseInDay {
 
     private Integer orderInDay;
 
+    private String notes;
+    private Integer customSets;
+    private String customReps;
+
     public ExerciseInDay() {
     }
 
