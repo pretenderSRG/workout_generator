@@ -33,8 +33,37 @@ public class SmartWorkoutGeneratorService {
         return buildResponse(userId, dayPlan, equipment, daysPerWeek);
     }
 
+
+
     private Map<Integer,List<Exercise>> distributeExercisesByRules(List<Exercise> exercises, int daysPerWeek, String splitType) {
 
+        return switch (splitType.toUpperCase()) {
+            case "PPL" -> distributeByPPL(exercises, daysPerWeek);
+            case "UL" -> distributeByUL(exercises, daysPerWeek);
+            case "FB" -> distributeByFB(exercises, daysPerWeek);
+            default -> distributeByPPL(exercises, daysPerWeek);
+        };
+
+    }
+
+    private Map<Integer, List<Exercise>> distributeByFB(List<Exercise> exercises, int daysPerWeek) {
+        Map<Integer, List<Exercise>> plan = new HashMap<>();
+
+        List<Exercise> allExercises = new ArrayList<>(exercises);
+        Collections.shuffle(allExercises);
+
+        int exercisePerDay = Math.max(1, allExercises.size()/daysPerWeek);
+
+        for (int day = 1; day <= daysPerWeek; day++) {
+            int start = (day - 1) * exercisePerDay;
+            int end = Math.min(day * exercisePerDay, allExercises.size());
+            plan.put(day, allExercises.subList(start, end));
+        }
+        return plan;
+    }
+
+    // PPL: Push, Pull, Legs, Core
+    private Map<Integer, List<Exercise>> distributeByPPL(List<Exercise> exercises, int daysPerWeek) {
         Map<Integer, List<Exercise>> plan = new HashMap<>();
 
         List<Exercise> push = exercises.stream().filter(e -> e.getCategory() == ExerciseCategory.PUSH).toList();
@@ -45,13 +74,13 @@ public class SmartWorkoutGeneratorService {
 
         List<Exercise> core = exercises.stream().filter(e -> e.getCategory() == ExerciseCategory.CORE).toList();
 
-        if(daysPerWeek >= 1) plan.put(1, push);
-        if(daysPerWeek >= 2) plan.put(2, pull);
-        if(daysPerWeek >= 3) plan.put(3, legs);
-        if(daysPerWeek >= 4) plan.put(4, core);
+        if (daysPerWeek >= 1) plan.put(1, push);
+        if (daysPerWeek >= 2) plan.put(2, pull);
+        if (daysPerWeek >= 3) plan.put(3, legs);
+        if (daysPerWeek >= 4) plan.put(4, core);
 
-        if (daysPerWeek >= 5) {
-            for (int day = 5; day < daysPerWeek; day++) {
+        if (daysPerWeek >=5) {
+            for (int day = 5; day <= daysPerWeek; day++) {
                 List<Exercise> randomDay = new ArrayList<>();
                 randomDay.addAll(push);
                 randomDay.addAll(pull);
@@ -61,11 +90,36 @@ public class SmartWorkoutGeneratorService {
                 plan.put(day, randomDay.subList(0, Math.min(4, randomDay.size())));
             }
         }
+        return plan;
 
+    }
+
+    // UPPER_LOWER
+    private Map<Integer, List<Exercise>> distributeByUL(List<Exercise> exercises, int daysPerWeek) {
+        Map<Integer, List<Exercise>> plan = new HashMap<>();
+
+        List<Exercise> upper = exercises.stream().filter(e -> e.getCategory() == ExerciseCategory.PUSH
+                || e.getCategory() == ExerciseCategory.PULL).toList();
+
+        List<Exercise> lower = exercises.stream().filter(e -> e.getCategory() == ExerciseCategory.LEGS ||
+                e.getCategory() == ExerciseCategory.CORE).toList();
+
+        if (daysPerWeek >= 1) plan.put(1, upper);
+        if (daysPerWeek >= 2) plan.put(2, lower);
+
+        if(daysPerWeek >= 3) {
+            for (int day = 3; day <= daysPerWeek; day++) {
+                if (day %2 == 1) {
+                    plan.put(day, upper);
+                } else {
+                    plan.put(day, lower);
+                }
+            }
+        }
         return plan;
     }
 
-     private WorkoutProgramResponse buildResponse(Long userId, Map<Integer, List<Exercise>> dayPlan,
+    private WorkoutProgramResponse buildResponse(Long userId, Map<Integer, List<Exercise>> dayPlan,
                                                   EquipmentType equipment, int daysPerWeek) {
 
         String programName = "My Smart " + daysPerWeek + "-day " + equipment.name() + " program";
