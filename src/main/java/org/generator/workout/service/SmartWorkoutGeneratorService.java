@@ -6,9 +6,7 @@ import org.generator.workout.dto.ExerciseInDayResponse;
 import org.generator.workout.dto.ExerciseResponse;
 import org.generator.workout.dto.WorkoutDayResponse;
 import org.generator.workout.dto.WorkoutProgramResponse;
-import org.generator.workout.model.EquipmentType;
-import org.generator.workout.model.Exercise;
-import org.generator.workout.model.ExerciseCategory;
+import org.generator.workout.model.*;
 import org.generator.workout.repository.ExerciseRepository;
 import org.springframework.stereotype.Service;
 
@@ -21,7 +19,7 @@ public class SmartWorkoutGeneratorService {
 
     private final ExerciseRepository exerciseRepository;
 
-    public WorkoutProgramResponse generateSmartProgram(Long userId, EquipmentType equipment, int daysPerWeek, String splitType) {
+    public WorkoutProgramResponse generateSmartProgram(Long userId, EquipmentType equipment, SplitType splitType, int daysPerWeek) {
         List<Exercise> exercises = exerciseRepository.findByEquipment(equipment);
 
         if (exercises.isEmpty()) {
@@ -30,17 +28,17 @@ public class SmartWorkoutGeneratorService {
 
         Map<Integer, List<Exercise>> dayPlan = distributeExercisesByRules(exercises, daysPerWeek, splitType);
 
-        return buildResponse(userId, dayPlan, equipment, daysPerWeek);
+        return buildResponse(userId, dayPlan, equipment, splitType, daysPerWeek);
     }
 
 
 
-    private Map<Integer,List<Exercise>> distributeExercisesByRules(List<Exercise> exercises, int daysPerWeek, String splitType) {
+    private Map<Integer,List<Exercise>> distributeExercisesByRules(List<Exercise> exercises, int daysPerWeek, SplitType splitType) {
 
-        return switch (splitType.toUpperCase()) {
-            case "PPL" -> distributeByPPL(exercises, daysPerWeek);
-            case "UL" -> distributeByUL(exercises, daysPerWeek);
-            case "FB" -> distributeByFB(exercises, daysPerWeek);
+        return switch (splitType) {
+            case PPL -> distributeByPPL(exercises, daysPerWeek);
+            case UL -> distributeByUL(exercises, daysPerWeek);
+            case FB -> distributeByFB(exercises, daysPerWeek);
             default -> distributeByPPL(exercises, daysPerWeek);
         };
 
@@ -74,10 +72,10 @@ public class SmartWorkoutGeneratorService {
 
         List<Exercise> core = exercises.stream().filter(e -> e.getCategory() == ExerciseCategory.CORE).toList();
 
-        if (daysPerWeek >= 1) plan.put(1, push);
-        if (daysPerWeek >= 2) plan.put(2, pull);
-        if (daysPerWeek >= 3) plan.put(3, legs);
-        if (daysPerWeek >= 4) plan.put(4, core);
+        if (daysPerWeek >= 1) plan.put(1, balanceMuscleGroupByDay(push));
+        if (daysPerWeek >= 2) plan.put(2, balanceMuscleGroupByDay(pull));
+        if (daysPerWeek >= 3) plan.put(3, balanceMuscleGroupByDay(legs));
+        if (daysPerWeek >= 4) plan.put(4, balanceMuscleGroupByDay(core));
 
         if (daysPerWeek >=5) {
             for (int day = 5; day <= daysPerWeek; day++) {
@@ -104,23 +102,61 @@ public class SmartWorkoutGeneratorService {
         List<Exercise> lower = exercises.stream().filter(e -> e.getCategory() == ExerciseCategory.LEGS ||
                 e.getCategory() == ExerciseCategory.CORE).toList();
 
-        if (daysPerWeek >= 1) plan.put(1, upper);
-        if (daysPerWeek >= 2) plan.put(2, lower);
+        if (daysPerWeek >= 1) plan.put(1, balanceMuscleGroupByDay(upper));
+        if (daysPerWeek >= 2) plan.put(2, balanceMuscleGroupByDay(lower));
 
         if(daysPerWeek >= 3) {
             for (int day = 3; day <= daysPerWeek; day++) {
                 if (day %2 == 1) {
-                    plan.put(day, upper);
+                    plan.put(day, balanceMuscleGroupByDay(upper));
                 } else {
-                    plan.put(day, lower);
+                    plan.put(day, balanceMuscleGroupByDay(lower));
                 }
             }
         }
         return plan;
     }
 
+    private List<Exercise> balanceMuscleGroupByDay(List<Exercise> exercises) {
+        Map<MuscleGroup, Long> muscleGroup = new HashMap<>();
+        List<Exercise> balanceDay = new ArrayList<>();
+
+        // Maximum exercises per group
+        int maxPerGroup = 2;
+
+        for (Exercise ex: exercises) {
+            long currentCount = muscleGroup.getOrDefault(ex.getMuscleGroup(), 0L);
+            if (currentCount < maxPerGroup) {
+                balanceDay.add(ex);
+                muscleGroup.put(ex.getMuscleGroup(), currentCount +1);
+            }
+        }
+        // Maximum number of exercises per day
+        int maxExAtDay = 4;
+        if (balanceDay.size() < maxExAtDay) {
+            for (Exercise ex: exercises) {
+                if (balanceDay.contains(ex)) {
+                    continue;
+                }
+                boolean overlaps = false;
+                for (Exercise existing: balanceDay) {
+                    if (existing.getMuscleGroup() == ex.getMuscleGroup() ||
+                    existing.getSecondaryMuscles().contains(ex.getMuscleGroup()) ||
+                    ex.getSecondaryMuscles().contains(existing.getMuscleGroup())) {
+                        overlaps = true;
+                        break;
+                    }
+                }
+                if (!overlaps && balanceDay.size() < maxExAtDay) {
+                    balanceDay.add(ex);
+                }
+            }
+        }
+        return balanceDay;
+    }
+
     private WorkoutProgramResponse buildResponse(Long userId, Map<Integer, List<Exercise>> dayPlan,
-                                                  EquipmentType equipment, int daysPerWeek) {
+                                                 EquipmentType equipment, SplitType splitType, int daysPerWeek) {
 
         String programName = "My Smart " + daysPerWeek + "-day " + equipment.name() + " program";
          LocalDateTime createdAt = LocalDateTime.now();
@@ -154,6 +190,7 @@ public class SmartWorkoutGeneratorService {
                 null,
                 programName,
                 equipment.name(),
+                splitType.name(),
                 daysPerWeek,
                 createdAt,
                 dayResponses

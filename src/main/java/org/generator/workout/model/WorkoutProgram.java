@@ -25,6 +25,9 @@ public class WorkoutProgram {
     @Enumerated(EnumType.STRING)
     private EquipmentType equipmentType;
 
+    @Enumerated(EnumType.STRING)
+    private SplitType splitType;
+
     @Column(nullable = false)
     private Integer daysPerWeek;
 
@@ -45,10 +48,12 @@ public class WorkoutProgram {
 
     public WorkoutProgram(String name,
                           EquipmentType equipmentType,
+                          SplitType splitType,
                           Integer daysPerWeek,
                           AppUser user) {
         this.name = name;
         this.equipmentType = equipmentType;
+        this.splitType = splitType;
         this.daysPerWeek = daysPerWeek;
         this.user = user;
     }

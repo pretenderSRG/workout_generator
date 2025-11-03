@@ -30,7 +30,7 @@ public class WorkoutGeneratorService {
         this.userRepository = userRepository;
     }
 
-    public WorkoutProgramResponse generateProgram(Long userId, EquipmentType equipment, int daysPerWeek) {
+    public WorkoutProgramResponse generateProgram(Long userId, EquipmentType equipment, SplitType splitType, int daysPerWeek) {
         System.out.println("Generating program for user ID: " + userId);
         AppUser user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
@@ -42,7 +42,7 @@ public class WorkoutGeneratorService {
         }
 
         String programName = String.format("My %d-day %s program", daysPerWeek, equipment.name());
-        WorkoutProgram program = new WorkoutProgram(programName, equipment, daysPerWeek, user);
+        WorkoutProgram program = new WorkoutProgram(programName, equipment, splitType, daysPerWeek, user);
 
         int exercisesPerDay = Math.min(4, (int) Math.ceil((double) exercises.size() / daysPerWeek));
         int exercisesIndex = 0;
@@ -85,6 +85,7 @@ public class WorkoutGeneratorService {
                 savedProgram.getId(),
                 savedProgram.getName(),
                 savedProgram.getEquipmentType().name(),
+                savedProgram.getSplitType().name(),
                 savedProgram.getDaysPerWeek(),
                 savedProgram.getCreatedAt(),
                 dayResponses
@@ -124,6 +125,7 @@ public class WorkoutGeneratorService {
                                   program.getId(),
                                   program.getName(),
                                   program.getEquipmentType().name(),
+                                  program.getSplitType().name(),
                                   program.getDaysPerWeek(),
                                   program.getCreatedAt(),
                                   dayResponses
@@ -165,6 +167,7 @@ public class WorkoutGeneratorService {
             program.getId(),
             program.getName(),
             program.getEquipmentType().name(),
+            program.getSplitType() .name(),
             program.getDaysPerWeek(),
             program.getCreatedAt(),
             dayResponses

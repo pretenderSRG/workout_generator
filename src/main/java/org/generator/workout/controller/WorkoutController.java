@@ -2,6 +2,7 @@ package org.generator.workout.controller;
 
 import jakarta.validation.Valid;
 import org.generator.workout.dto.WorkoutDayResponse;
+import org.generator.workout.model.SplitType;
 import org.generator.workout.model.WorkoutProgram;
 import org.generator.workout.repository.AppUserRepository;
 import org.generator.workout.repository.WorkoutProgramRepository;
@@ -60,17 +61,19 @@ public class WorkoutController {
     @PostMapping("/generate")
     public WorkoutProgramResponse generateProgram(
             @RequestParam EquipmentType equipment,
+            @RequestParam SplitType splitType,
             @RequestParam(defaultValue = "3") int daysPerWeek) {
 
-        return generatorService.generateProgram(getUserId(), equipment, daysPerWeek);
+        return generatorService.generateProgram(getUserId(), equipment, splitType, daysPerWeek);
     }
 
     @PostMapping("/generate-smart")
     public WorkoutProgramResponse generateSmartWorkout(
             @RequestParam EquipmentType equipment,
-            @RequestParam(defaultValue = "3") int daysPerWeek,
-            @RequestParam(defaultValue = "PPL") String splitType) {
+            @RequestParam(defaultValue = "SplitType.PPL") SplitType splitType,
+            @RequestParam(defaultValue = "3") int daysPerWeek
+            ) {
         Long userId = getUserId();
-        return smartGeneratorService.generateSmartProgram(userId, equipment, daysPerWeek, splitType);
+        return smartGeneratorService.generateSmartProgram(userId, equipment, splitType, daysPerWeek);
     }
 }

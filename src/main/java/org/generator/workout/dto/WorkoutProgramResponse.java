@@ -2,6 +2,7 @@ package org.generator.workout.dto;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.generator.workout.model.SplitType;
 import org.generator.workout.model.WorkoutDay;
 
 import java.time.LocalDateTime;
@@ -13,16 +14,18 @@ public class WorkoutProgramResponse {
     private Long id;
     private String name;
     private String equipmentType;
+    private String splitType;
     private Integer daysPerWeek;
     private LocalDateTime createdAt;
     private List<WorkoutDayResponse> days;
 
-    public WorkoutProgramResponse(Long id, String name, String equipmentType,
+    public WorkoutProgramResponse(Long id, String name, String equipmentType, String splitType,
                                   Integer daysPerWeek, LocalDateTime createdAt,
                                   List<WorkoutDayResponse> days) {
         this.id = id;
         this.name = name;
         this.equipmentType = equipmentType;
+        this.splitType = splitType;
         this.daysPerWeek = daysPerWeek;
         this.createdAt = createdAt;
         this.days = days;
