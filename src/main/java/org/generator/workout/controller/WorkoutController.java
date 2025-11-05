@@ -70,7 +70,7 @@ public class WorkoutController {
     @PostMapping("/generate-smart")
     public WorkoutProgramResponse generateSmartWorkout(
             @RequestParam EquipmentType equipment,
-            @RequestParam(defaultValue = "SplitType.PPL") SplitType splitType,
+            @RequestParam(defaultValue = "PPL") SplitType splitType,
             @RequestParam(defaultValue = "3") int daysPerWeek
             ) {
         Long userId = getUserId();

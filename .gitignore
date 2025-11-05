@@ -1,5 +1,7 @@
 data/
 
+src/test/resources/api.http
+
 HELP.md
 .gradle
 build/

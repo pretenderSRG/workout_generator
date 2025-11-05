@@ -8,5 +8,15 @@ public enum MuscleGroup {
     TRICEPS,
     LEGS,
     CORE,
-    FULL_BODY
+    FULL_BODY,
+    REAR_DELTS,
+    GLUTES,
+    CALVES,
+    HIP_FLEXORS,
+    OBLIQUES,
+    MIDDLE_DELTS,
+    TRAPEZIUS,
+    RHOMBOIDS,
+    QUADS,
+    HAMSTRINGS
 }
