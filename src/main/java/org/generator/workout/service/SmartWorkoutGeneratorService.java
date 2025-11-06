@@ -38,24 +38,12 @@ public class SmartWorkoutGeneratorService {
         List<Exercise> allExercises = new ArrayList<>(exercises);
 
         // Exercises from previous day
-        List<Exercise> previousDayExercises = new ArrayList<>();
+        Set<Long> usedExercisesIds = new HashSet<>();
 
         for (int day = 1; day <= daysPerWeek; day++) {
             List<Exercise> availableExercises = new ArrayList<>(allExercises);
 
-            List<Exercise> dayToAvoid = new ArrayList<>(previousDayExercises);
-
-            if (!dayToAvoid.isEmpty()) {
-                availableExercises = availableExercises.stream()
-                        .filter(ex -> dayToAvoid.stream().noneMatch(prev -> prev.getId().equals(ex.getId())))
-                        .filter(ex -> !dayToAvoid.stream()
-                                .anyMatch((prev -> prev.getMuscleGroup() == ex.getMuscleGroup() ||
-                            prev.getSecondaryMuscles().contains(ex.getMuscleGroup()) ||
-                            ex.getSecondaryMuscles().contains(prev.getMuscleGroup()) ||
-                            prev.getSecondaryMuscles().stream().anyMatch(ex.getSecondaryMuscles()::contains)
-                    )))
-                        .toList();
-            }
+            availableExercises.removeIf(ex -> usedExercisesIds.contains(ex.getId()));
 
             List<Exercise> dayExercises = switch (splitType) {
                 case PPL -> getExercisesForPPL(availableExercises, day);
@@ -65,8 +53,9 @@ public class SmartWorkoutGeneratorService {
 
             dayExercises = balanceMuscleGroupByDay(dayExercises);
 
+            dayExercises.forEach(ex -> usedExercisesIds.add(ex.getId()));
+
             plan.put(day, dayExercises);
-            previousDayExercises = dayExercises;
         }
         return plan;
     }
@@ -77,7 +66,7 @@ public class SmartWorkoutGeneratorService {
             case 1 -> exercises.stream().filter(e -> e.getCategory() == ExerciseCategory.PUSH).toList();
             case 2 -> exercises.stream().filter(e -> e.getCategory() == ExerciseCategory.PULL).toList();
             case 3 -> exercises.stream().filter(e -> e.getCategory() == ExerciseCategory.LEGS).toList();
-            case 4 -> exercises.stream().filter(e -> e.getCategory() == ExerciseCategory.CORE).toList();
+            case 0 -> exercises.stream().filter(e -> e.getCategory() == ExerciseCategory.CORE).toList();
             default -> exercises;
         };
 
