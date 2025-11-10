@@ -79,7 +79,7 @@ public class SmartWorkoutGeneratorService {
                 exercises.stream().filter(e -> e.getCategory() == ExerciseCategory.LEGS || e.getCategory() == ExerciseCategory.CORE).toList();
     }
 
-     // FL: FULL_BODY
+    // FL: FULL_BODY
     private List<Exercise> getExercisesForFB(List<Exercise> exercises) {
         Map<MuscleGroup, List<Exercise>> exerciseByMuscle = exercises.stream()
                 .collect(Collectors.groupingBy(Exercise::getMuscleGroup));
@@ -105,23 +105,23 @@ public class SmartWorkoutGeneratorService {
         Map<MuscleGroup, Long> muscleGroup = new HashMap<>();
         List<Exercise> balanceDay = new ArrayList<>();
 
-        // Maximum exercises per group
-        int maxPerGroup = 2;
+        int maxExercisePerGroup = 2;
+        int maxExercisePerDay = 4;
 
         for (Exercise ex : exercises) {
             long currentCount = muscleGroup.getOrDefault(ex.getMuscleGroup(), 0L);
-            if (currentCount < maxPerGroup) {
+            if (currentCount < maxExercisePerGroup && balanceDay.size() < maxExercisePerDay) {
                 balanceDay.add(ex);
                 muscleGroup.put(ex.getMuscleGroup(), currentCount + 1);
             }
         }
-        // Maximum number of exercises per day
-        int maxExAtDay = 4;
-        if (balanceDay.size() < maxExAtDay) {
+
+        if (balanceDay.size() < maxExercisePerDay) {
             for (Exercise ex : exercises) {
                 if (balanceDay.contains(ex)) {
                     continue;
                 }
+
                 boolean overlaps = false;
                 for (Exercise existing : balanceDay) {
                     if (existing.getMuscleGroup() == ex.getMuscleGroup() ||
@@ -131,13 +131,15 @@ public class SmartWorkoutGeneratorService {
                         break;
                     }
                 }
-                if (!overlaps && balanceDay.size() < maxExAtDay) {
+                if (!overlaps && balanceDay.size() < maxExercisePerDay) {
                     balanceDay.add(ex);
                 }
             }
         }
+
         return balanceDay;
     }
+
 
     private WorkoutProgramResponse buildResponse(Long userId, Map<Integer, List<Exercise>> dayPlan,
                                                  EquipmentType equipment, SplitType splitType, int daysPerWeek) {
