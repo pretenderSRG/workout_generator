@@ -33,17 +33,12 @@ public class SmartWorkoutGeneratorService {
 
 
     private Map<Integer, List<Exercise>> distributeExercisesByRules(List<Exercise> exercises, int daysPerWeek, SplitType splitType) {
-
         Map<Integer, List<Exercise>> plan = new HashMap<>();
-        List<Exercise> allExercises = new ArrayList<>(exercises);
-
-        // Exercises from previous day
         Set<Long> usedExercisesIds = new HashSet<>();
 
         for (int day = 1; day <= daysPerWeek; day++) {
-            List<Exercise> availableExercises = new ArrayList<>(allExercises);
-
-            availableExercises.removeIf(ex -> usedExercisesIds.contains(ex.getId()));
+            List<Exercise> availableExercises = exercises.stream()
+                    .filter(ex -> !usedExercisesIds.contains(ex.getId())).toList();
 
             List<Exercise> dayExercises = switch (splitType) {
                 case PPL -> getExercisesForPPL(availableExercises, day);
@@ -53,12 +48,15 @@ public class SmartWorkoutGeneratorService {
 
             dayExercises = balanceMuscleGroupByDay(dayExercises);
 
+            // Add exercises id to set
             dayExercises.forEach(ex -> usedExercisesIds.add(ex.getId()));
 
             plan.put(day, dayExercises);
+
         }
         return plan;
     }
+
 
     // PPL: Push, Pull, Legs, Core
     private List<Exercise> getExercisesForPPL(List<Exercise> exercises, int day) {
@@ -96,10 +94,7 @@ public class SmartWorkoutGeneratorService {
             dayExercise = dayExercise.subList(0, 6);
         }
         return dayExercise;
-
-
     }
-
 
     private List<Exercise> balanceMuscleGroupByDay(List<Exercise> exercises) {
         Map<MuscleGroup, Long> muscleGroup = new HashMap<>();
@@ -116,30 +111,9 @@ public class SmartWorkoutGeneratorService {
             }
         }
 
-        if (balanceDay.size() < maxExercisePerDay) {
-            for (Exercise ex : exercises) {
-                if (balanceDay.contains(ex)) {
-                    continue;
-                }
-
-                boolean overlaps = false;
-                for (Exercise existing : balanceDay) {
-                    if (existing.getMuscleGroup() == ex.getMuscleGroup() ||
-                            existing.getSecondaryMuscles().contains(ex.getMuscleGroup()) ||
-                            ex.getSecondaryMuscles().contains(existing.getMuscleGroup())) {
-                        overlaps = true;
-                        break;
-                    }
-                }
-                if (!overlaps && balanceDay.size() < maxExercisePerDay) {
-                    balanceDay.add(ex);
-                }
-            }
-        }
 
         return balanceDay;
     }
-
 
     private WorkoutProgramResponse buildResponse(Long userId, Map<Integer, List<Exercise>> dayPlan,
                                                  EquipmentType equipment, SplitType splitType, int daysPerWeek) {
