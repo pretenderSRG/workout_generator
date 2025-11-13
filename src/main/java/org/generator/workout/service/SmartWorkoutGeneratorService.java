@@ -46,7 +46,7 @@ public class SmartWorkoutGeneratorService {
                 case FB -> getExercisesForFB(availableExercises);
             };
 
-            dayExercises = balanceMuscleGroupByDay(dayExercises);
+            dayExercises = balanceMuscleGroupByDay(dayExercises, day, splitType);
 
             // Add exercises id to set
             dayExercises.forEach(ex -> usedExercisesIds.add(ex.getId()));
@@ -96,12 +96,17 @@ public class SmartWorkoutGeneratorService {
         return dayExercise;
     }
 
-    private List<Exercise> balanceMuscleGroupByDay(List<Exercise> exercises) {
+    private List<Exercise> balanceMuscleGroupByDay(List<Exercise> exercises, int day, SplitType splitType) {
         Map<MuscleGroup, Long> muscleGroup = new HashMap<>();
         List<Exercise> balanceDay = new ArrayList<>();
 
         int maxExercisePerGroup = 2;
         int maxExercisePerDay = 4;
+
+        if (splitType == SplitType.PPL && (day % 4 == 3)) {
+            exercises = exercises.stream()
+                    .sorted(Comparator.comparing(ex -> ex.getMuscleGroup() == MuscleGroup.LEGS ? 0 : 1)).toList();
+        }
 
         for (Exercise ex : exercises) {
             long currentCount = muscleGroup.getOrDefault(ex.getMuscleGroup(), 0L);
