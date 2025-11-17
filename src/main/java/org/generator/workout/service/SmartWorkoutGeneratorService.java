@@ -6,8 +6,11 @@ import org.generator.workout.dto.ExerciseResponse;
 import org.generator.workout.dto.WorkoutDayResponse;
 import org.generator.workout.dto.WorkoutProgramResponse;
 import org.generator.workout.model.*;
+import org.generator.workout.repository.AppUserRepository;
 import org.generator.workout.repository.ExerciseRepository;
+import org.generator.workout.repository.WorkoutProgramRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -18,17 +21,46 @@ import java.util.stream.Collectors;
 public class SmartWorkoutGeneratorService {
 
     private final ExerciseRepository exerciseRepository;
+    private final AppUserRepository userRepository;
+    private final WorkoutProgramRepository programRepository;
 
+    @Transactional
     public WorkoutProgramResponse generateSmartProgram(Long userId, EquipmentType equipment, SplitType splitType, int daysPerWeek) {
+        AppUser user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+
         List<Exercise> exercises = exerciseRepository.findByEquipment(equipment);
 
         if (exercises.isEmpty()) {
             throw new IllegalArgumentException("No exercises found for equipment: " + equipment);
         }
 
+        // create workout program
+        String programName = "My Smart " + daysPerWeek + "-day " + equipment.name() + " program";
+        WorkoutProgram program = new WorkoutProgram(programName, equipment, splitType, daysPerWeek, user);
+
         Map<Integer, List<Exercise>> dayPlan = distributeExercisesByRules(exercises, daysPerWeek, splitType);
 
-        return buildResponse(userId, dayPlan, equipment, splitType, daysPerWeek);
+        // add days to plan
+        for (Map.Entry<Integer, List<Exercise>> entry : dayPlan.entrySet()) {
+            int dayNumber = entry.getKey();
+            List<Exercise> dayExercises = entry.getValue();
+
+            WorkoutDay day = new WorkoutDay(dayNumber, program);
+            program.getDays().add(day);
+
+            int order = 1;
+            for (Exercise exercise : dayExercises) {
+                ExerciseInDay exerciseInDay = new ExerciseInDay(day, exercise, order++);
+                day.getExercises().add(exerciseInDay);
+            }
+        }
+
+        // save program to DB
+        WorkoutProgram savedProgram = programRepository.save(program);
+
+        // return DTO
+        return buildResponse(savedProgram, equipment, splitType, daysPerWeek);
     }
 
 
@@ -46,7 +78,7 @@ public class SmartWorkoutGeneratorService {
                 case FB -> getExercisesForFB(availableExercises);
             };
 
-            dayExercises = balanceMuscleGroupByDay(dayExercises, day, splitType);
+            dayExercises = balanceMuscleGroupByDay(dayExercises, splitType, day);
 
             // Add exercises id to set
             dayExercises.forEach(ex -> usedExercisesIds.add(ex.getId()));
@@ -96,14 +128,14 @@ public class SmartWorkoutGeneratorService {
         return dayExercise;
     }
 
-    private List<Exercise> balanceMuscleGroupByDay(List<Exercise> exercises, int day, SplitType splitType) {
+    private List<Exercise> balanceMuscleGroupByDay(List<Exercise> exercises, SplitType splitType, int dayPerWeek) {
         Map<MuscleGroup, Long> muscleGroup = new HashMap<>();
         List<Exercise> balanceDay = new ArrayList<>();
 
         int maxExercisePerGroup = 2;
         int maxExercisePerDay = 4;
 
-        if (splitType == SplitType.PPL && (day % 4 == 3)) {
+        if (splitType == SplitType.PPL && (dayPerWeek % 4 == 3)) {
             exercises = exercises.stream()
                     .sorted(Comparator.comparing(ex -> ex.getMuscleGroup() == MuscleGroup.LEGS ? 0 : 1)).toList();
         }
@@ -120,47 +152,46 @@ public class SmartWorkoutGeneratorService {
         return balanceDay;
     }
 
-    private WorkoutProgramResponse buildResponse(Long userId, Map<Integer, List<Exercise>> dayPlan,
-                                                 EquipmentType equipment, SplitType splitType, int daysPerWeek) {
+    // src/main/java/org/generator/workout/service/SmartWorkoutGeneratorService.java
+    private WorkoutProgramResponse buildResponse(WorkoutProgram program, EquipmentType equipment, SplitType splitType, int daysPerWeek) {
 
-        String programName = "My Smart " + daysPerWeek + "-day " + equipment.name() + " program";
-        LocalDateTime createdAt = LocalDateTime.now();
-
-        List<WorkoutDayResponse> dayResponses = dayPlan.entrySet().stream()
-                .map(entry -> {
-                    int dayNumber = entry.getKey();
-                    List<Exercise> exercises = entry.getValue();
-
-                    List<ExerciseInDayResponse> exerciseInDayResponses = exercises.stream()
-                            .map(exercise -> new ExerciseInDayResponse(
-                                    null,
+        List<WorkoutDayResponse> dayResponses = program.getDays().stream()
+                .sorted(Comparator.comparing(WorkoutDay::getDayNumber))
+                .map(day -> {
+                    List<ExerciseInDayResponse> exerciseInDayResponses = day.getExercises().stream()
+                            .sorted(Comparator.comparing(ExerciseInDay::getOrderInDay))
+                            .map(exInDay -> new ExerciseInDayResponse(
+                                    exInDay.getId(),
                                     new ExerciseResponse(
-                                            exercise.getId(),
-                                            exercise.getName(),
-                                            exercise.getDescription(),
-                                            exercise.getEquipment().name(),
-                                            exercise.getMuscleGroup().name(),
-                                            exercise.getReps(),
-                                            exercise.getSets()
+                                            exInDay.getExercise().getId(),
+                                            exInDay.getExercise().getName(),
+                                            exInDay.getExercise().getDescription(),
+                                            exInDay.getExercise().getEquipment().name(),
+                                            exInDay.getExercise().getMuscleGroup().name(),
+                                            exInDay.getExercise().getReps(),
+                                            exInDay.getExercise().getSets()
                                     ),
-                                    exercises.indexOf(exercise) + 1
-                            )).toList();
+                                    exInDay.getOrderInDay()
+                            ))
+                            .toList();
+
                     return new WorkoutDayResponse(
-                            null,
-                            dayNumber,
+                            day.getId(),
+                            day.getDayNumber(),
                             exerciseInDayResponses
                     );
-                }).toList();
+                })
+                .toList();
+
         return new WorkoutProgramResponse(
-                null,
-                programName,
+                program.getId(),
+                program.getName(),
                 equipment.name(),
                 splitType.name(),
-                daysPerWeek,
-                createdAt,
+                program.getDaysPerWeek(),
+                program.getCreatedAt(),
                 dayResponses
         );
     }
-
 }
 

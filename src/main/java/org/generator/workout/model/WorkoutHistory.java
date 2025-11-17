@@ -15,7 +15,6 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-@RequiredArgsConstructor
 public class WorkoutHistory {
 
     @Id
@@ -35,4 +34,12 @@ public class WorkoutHistory {
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "history_id")
     private List<HistoryExercise> exercises = new ArrayList<>();
+
+    public WorkoutHistory(Long id, AppUser user, WorkoutProgram program, LocalDateTime date, List<HistoryExercise> exercises) {
+        this.id = id;
+        this.user = user;
+        this.program = program;
+        this.date = date;
+        this.exercises = exercises;
+    }
 }

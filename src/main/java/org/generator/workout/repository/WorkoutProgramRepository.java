@@ -13,5 +13,4 @@ public interface WorkoutProgramRepository extends JpaRepository<WorkoutProgram, 
 
     Optional<WorkoutProgram> findByIdAndUser(Long id, AppUser user);
 
-//    long deleteByIdAndUser(Long id, AppUser user);
 }
