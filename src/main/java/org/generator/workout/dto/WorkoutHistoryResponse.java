@@ -20,6 +20,6 @@ public class WorkoutHistoryResponse {
         this.id = id;
         this.username = username;
         this.workoutProgram = workoutProgram;
-        this.historyExerciseResponses = historyExercisesResponse        ;
+        this.historyExerciseResponses = historyExercisesResponse;
     }
 }

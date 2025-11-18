@@ -29,7 +29,7 @@ public class WorkoutHistoryService {
 
     @Transactional
     public void recordWorkout(Long userId, Long programId, List<RecordExerciseRequest> exercises) {
-        AppUser user =  userRepository.findById(userId) // <= Використовуємо безпосередньо
+        AppUser user =  userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
 
         WorkoutProgram program = workoutProgramRepository.findByIdAndUser(programId, user)
@@ -39,7 +39,7 @@ public class WorkoutHistoryService {
 
         history.setUser(user);
         history.setProgram(program);
-        history.setDate(LocalDateTime.now());
+        history.setDate(program.getCreatedAt());
 
         List<HistoryExercise> historyExercises = exercises.stream()
                 .map(req -> {
