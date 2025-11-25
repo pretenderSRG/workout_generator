@@ -1,5 +1,6 @@
 package org.generator.workout.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.generator.workout.dto.RecordExerciseRequest;
 import org.generator.workout.dto.WorkoutHistoryResponse;
@@ -22,7 +23,7 @@ public class WorkoutHistoryController {
 
     @PostMapping("/record")
     public ResponseEntity<String> recordWorkout(@RequestParam Long programId,
-                                                @RequestBody List<RecordExerciseRequest> exercises) {
+                                               @Valid @RequestBody List<@Valid RecordExerciseRequest> exercises) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
 

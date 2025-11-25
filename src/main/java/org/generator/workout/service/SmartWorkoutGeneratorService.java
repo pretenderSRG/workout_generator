@@ -1,6 +1,7 @@
 package org.generator.workout.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.generator.workout.dto.ExerciseInDayResponse;
 import org.generator.workout.dto.ExerciseResponse;
 import org.generator.workout.dto.WorkoutDayResponse;
@@ -12,11 +13,12 @@ import org.generator.workout.repository.WorkoutProgramRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class SmartWorkoutGeneratorService {
 
@@ -26,8 +28,14 @@ public class SmartWorkoutGeneratorService {
 
     @Transactional
     public WorkoutProgramResponse generateSmartProgram(Long userId, EquipmentType equipment, SplitType splitType, int daysPerWeek) {
+        log.info("Generating workout program for user ID: {}, equipment: {}, splitType: {}, daysPerWeek: {}",
+                userId, equipment, splitType, daysPerWeek);
+
         AppUser user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+                .orElseThrow(() ->{
+                    log.debug("User not found with ID: {}", userId);
+                    return new IllegalArgumentException("User not found: " + userId);
+                });
 
         List<Exercise> exercises = exerciseRepository.findByEquipment(equipment);
 
@@ -39,6 +47,8 @@ public class SmartWorkoutGeneratorService {
         String programName = "My Smart " + daysPerWeek + "-day " + equipment.name() + " program";
         WorkoutProgram program = new WorkoutProgram(programName, equipment, splitType, daysPerWeek, user);
 
+        log.info("Created program with user {}", program.getUser());
+
         Map<Integer, List<Exercise>> dayPlan = distributeExercisesByRules(exercises, daysPerWeek, splitType);
 
         // add days to plan
@@ -48,17 +58,21 @@ public class SmartWorkoutGeneratorService {
 
             WorkoutDay day = new WorkoutDay(dayNumber, program);
             program.getDays().add(day);
+            log.info("Add day № {}", dayNumber);
 
             int order = 1;
             for (Exercise exercise : dayExercises) {
                 ExerciseInDay exerciseInDay = new ExerciseInDay(day, exercise, order++);
                 day.getExercises().add(exerciseInDay);
+                log.info("Add exercise - {}", exercise.getName());
             }
         }
 
+        log.info("About to save program with user ID: {}", program.getUser().getId());
         // save program to DB
         WorkoutProgram savedProgram = programRepository.save(program);
 
+        log.info("Successfully generated program ID: {} for user ID: {}", savedProgram.getId(), userId);
         // return DTO
         return buildResponse(savedProgram, equipment, splitType, daysPerWeek);
     }
@@ -152,7 +166,6 @@ public class SmartWorkoutGeneratorService {
         return balanceDay;
     }
 
-    // src/main/java/org/generator/workout/service/SmartWorkoutGeneratorService.java
     private WorkoutProgramResponse buildResponse(WorkoutProgram program, EquipmentType equipment, SplitType splitType, int daysPerWeek) {
 
         List<WorkoutDayResponse> dayResponses = program.getDays().stream()

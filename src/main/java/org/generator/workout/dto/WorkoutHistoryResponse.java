@@ -1,6 +1,8 @@
 package org.generator.workout.dto;
 
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import org.generator.workout.model.HistoryExercise;
@@ -12,7 +14,11 @@ import java.util.List;
 public class WorkoutHistoryResponse {
 
     private Long id;
+
+    @NotNull
+    @NotBlank
     private String username;
+
     private String workoutProgram;
     private List<HistoryExerciseResponse> historyExerciseResponses;
 

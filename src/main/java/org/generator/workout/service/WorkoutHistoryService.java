@@ -2,6 +2,7 @@ package org.generator.workout.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.generator.workout.dto.HistoryExerciseResponse;
 import org.generator.workout.dto.RecordExerciseRequest;
 import org.generator.workout.dto.WorkoutHistoryResponse;
@@ -15,10 +16,11 @@ import org.generator.workout.repository.WorkoutHistoryRepository;
 import org.generator.workout.repository.WorkoutProgramRepository;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+
 import java.util.List;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class WorkoutHistoryService {
 

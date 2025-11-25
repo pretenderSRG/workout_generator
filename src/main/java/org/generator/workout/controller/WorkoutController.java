@@ -1,6 +1,8 @@
 package org.generator.workout.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.generator.workout.dto.WorkoutDayResponse;
 import org.generator.workout.model.SplitType;
 import org.generator.workout.model.WorkoutProgram;
@@ -71,7 +73,7 @@ public class WorkoutController {
     public WorkoutProgramResponse generateSmartWorkout(
             @RequestParam EquipmentType equipment,
             @RequestParam(defaultValue = "PPL") SplitType splitType,
-            @RequestParam(defaultValue = "3") int daysPerWeek
+            @RequestParam(defaultValue = "3") @Min(1) @Max(7) int daysPerWeek
             ) {
         Long userId = getUserId();
         return smartGeneratorService.generateSmartProgram(userId, equipment, splitType, daysPerWeek);
