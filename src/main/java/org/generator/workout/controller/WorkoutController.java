@@ -40,20 +40,15 @@ public class WorkoutController {
     }
 
     @GetMapping
-    public List<WorkoutProgramResponse> getUserWorkoutPrograms() {
-        return generatorService.getUserWorkoutProgram(getUserId());
+    public List<WorkoutProgramResponse> getUserWorkoutPrograms(@RequestParam(required = false) EquipmentType equipment,
+                                                               @RequestParam(required = false) SplitType splitType) {
+        return generatorService.getUserWorkoutProgram(getUserId(), equipment, splitType);
     }
 
     @GetMapping("/{id}")
     public WorkoutProgramResponse getWorkoutProgramById(@PathVariable Long id) {
 
         return generatorService.getWorkoutProgramById(getUserId(), id);
-    }
-
-    @GetMapping("/filter")
-    public List<WorkoutProgramResponse> getFilterWorkoutProgramByEquipment(@RequestParam EquipmentType equipment) {
-        return generatorService.getUserWorkoutProgramByEquipment(getUserId(),equipment);
-
     }
 
     @DeleteMapping("/{id}")
@@ -76,7 +71,7 @@ public class WorkoutController {
             @RequestParam EquipmentType equipment,
             @RequestParam(defaultValue = "PPL") SplitType splitType,
             @RequestParam(defaultValue = "3") @Min(1) @Max(7) int daysPerWeek
-            ) {
+    ) {
         Long userId = getUserId();
         return smartGeneratorService.generateSmartProgram(userId, equipment, splitType, daysPerWeek);
     }

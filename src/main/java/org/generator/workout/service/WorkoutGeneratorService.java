@@ -40,7 +40,7 @@ public class WorkoutGeneratorService {
         System.out.println("Generating program for user ID: " + userId);
         AppUser user = verifyUser(userId);
 
-        List<Exercise> exercises =  exerciseRepository.findByEquipment(equipment);
+        List<Exercise> exercises = exerciseRepository.findByEquipment(equipment);
 
         if (exercises.isEmpty()) {
             throw new IllegalArgumentException("No exercises found for equipment: " + equipment);
@@ -63,7 +63,7 @@ public class WorkoutGeneratorService {
             }
         }
 
-        WorkoutProgram savedProgram =  programRepository.save(program);
+        WorkoutProgram savedProgram = programRepository.save(program);
 
         List<WorkoutDayResponse> dayResponses = savedProgram.getDays().stream()
                 .map(day -> new WorkoutDayResponse(
@@ -97,45 +97,28 @@ public class WorkoutGeneratorService {
         );
     }
 
-    public List<WorkoutProgramResponse> getUserWorkoutProgram(Long userId) {
+    public List<WorkoutProgramResponse> getUserWorkoutProgram(Long userId, EquipmentType equipment, SplitType splitType) {
         AppUser user = verifyUser(userId);
 
-        List<WorkoutProgram> programs = programRepository.findByUser(user);
+        List<WorkoutProgram> programs;
 
-        return programs.stream()
-                .map(program -> {
-                    List<WorkoutDayResponse> dayResponses = program.getDays().stream()
-                            .map(day -> new WorkoutDayResponse(
-                                    day.getId(),
-                                    day.getDayNumber(),
-                                    day.getExercises().stream()
-                                            .map(exerciseInDay -> new ExerciseInDayResponse(
-                                                    exerciseInDay.getId(),
-                                                    new ExerciseResponse(
-                                                            exerciseInDay.getExercise().getId(),
-                                                            exerciseInDay.getExercise().getName(),
-                                                            exerciseInDay.getExercise().getDescription(),
-                                                            exerciseInDay.getExercise().getEquipment().name(),
-                                                            exerciseInDay.getExercise().getMuscleGroup().name(),
-                                                            exerciseInDay.getExercise().getReps(),
-                                                            exerciseInDay.getExercise().getSets()
-                                                    ),
-                                                    exerciseInDay.getOrderInDay()
-                                                    ))
-                                            .toList()
-                                    ))
-                            .toList();
-                          return new WorkoutProgramResponse(
-                                  program.getId(),
-                                  program.getName(),
-                                  program.getEquipmentType().name(),
-                                  program.getSplitType().name(),
-                                  program.getDaysPerWeek(),
-                                  program.getCreatedAt(),
-                                  dayResponses
-                          );
+        if (equipment != null && splitType != null) {
+            programs = programRepository.findByUserAndEquipmentTypeAndSplitType(user, equipment, splitType);
+        } else if (equipment != null) {
+            programs = programRepository.findByUserAndEquipmentType(user, equipment);
+        } else if (splitType != null) {
+            programs = programRepository.findByUserAndSplitType(user, splitType);
+        } else {
+            programs = programRepository.findByUser(user);
+        }
 
-                }).toList();
+            return programs.stream()
+                    .map(program -> buildResponse(
+                            program,
+                            program.getEquipmentType(),
+                            program.getSplitType(),
+                            program.getDaysPerWeek()
+                    )).toList();
     }
 
     public WorkoutProgramResponse getWorkoutProgramById(Long userId, Long programId) {
@@ -145,55 +128,46 @@ public class WorkoutGeneratorService {
                 .orElseThrow(() -> new IllegalArgumentException("Program not found or access denied: " + programId));
 
         List<WorkoutDayResponse> dayResponses = program.getDays().stream()
-            .map(day -> new WorkoutDayResponse(
-                day.getId(),
-                day.getDayNumber(),
-                day.getExercises().stream()
-                    .map(exInDay -> new ExerciseInDayResponse(
-                        exInDay.getId(),
-                        new ExerciseResponse(
-                            exInDay.getExercise().getId(),
-                            exInDay.getExercise().getName(),
-                            exInDay.getExercise().getDescription(),
-                            exInDay.getExercise().getEquipment().name(),
-                            exInDay.getExercise().getMuscleGroup().name(),
-                            exInDay.getExercise().getReps(),
-                            exInDay.getExercise().getSets()
-                        ),
-                        exInDay.getOrderInDay()
-                    ))
-                    .collect(Collectors.toList())
-            ))
-            .collect(Collectors.toList());
+                .map(day -> new WorkoutDayResponse(
+                        day.getId(),
+                        day.getDayNumber(),
+                        day.getExercises().stream()
+                                .map(exInDay -> new ExerciseInDayResponse(
+                                        exInDay.getId(),
+                                        new ExerciseResponse(
+                                                exInDay.getExercise().getId(),
+                                                exInDay.getExercise().getName(),
+                                                exInDay.getExercise().getDescription(),
+                                                exInDay.getExercise().getEquipment().name(),
+                                                exInDay.getExercise().getMuscleGroup().name(),
+                                                exInDay.getExercise().getReps(),
+                                                exInDay.getExercise().getSets()
+                                        ),
+                                        exInDay.getOrderInDay()
+                                ))
+                                .collect(Collectors.toList())
+                ))
+                .collect(Collectors.toList());
 
         return new WorkoutProgramResponse(
-            program.getId(),
-            program.getName(),
-            program.getEquipmentType().name(),
-            program.getSplitType() .name(),
-            program.getDaysPerWeek(),
-            program.getCreatedAt(),
-            dayResponses
+                program.getId(),
+                program.getName(),
+                program.getEquipmentType().name(),
+                program.getSplitType().name(),
+                program.getDaysPerWeek(),
+                program.getCreatedAt(),
+                dayResponses
         );
     }
 
     public void deleteWorkoutProgramById(Long userId, Long programId) {
         AppUser user = verifyUser(userId);
 
-       WorkoutProgram program = programRepository.findByIdAndUser(programId, user)
-               .orElseThrow(() -> new IllegalArgumentException("Program not found or access denied: " + programId));
+        WorkoutProgram program = programRepository.findByIdAndUser(programId, user)
+                .orElseThrow(() -> new IllegalArgumentException("Program not found or access denied: " + programId));
 
-       programRepository.delete(program);
+        programRepository.delete(program);
 
-    }
-
-    public List<WorkoutProgramResponse> getUserWorkoutProgramByEquipment(Long userId, EquipmentType equipment) {
-        AppUser user = verifyUser(userId);
-        List<WorkoutProgram> filteredWorkoutProgram = programRepository.findByUserAndEquipmentType(user, equipment);
-
-        return filteredWorkoutProgram.stream()
-                .map(program -> buildResponse(program, program.getEquipmentType(), program.getSplitType(),
-                        program.getDaysPerWeek())).toList();
     }
 
     private WorkoutProgramResponse buildResponse(WorkoutProgram program, EquipmentType equipment, SplitType splitType, int daysPerWeek) {
