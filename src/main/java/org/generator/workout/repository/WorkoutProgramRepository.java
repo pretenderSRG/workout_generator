@@ -2,6 +2,7 @@ package org.generator.workout.repository;
 
 import org.generator.workout.dto.WorkoutProgramResponse;
 import org.generator.workout.model.AppUser;
+import org.generator.workout.model.EquipmentType;
 import org.generator.workout.model.WorkoutProgram;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -12,5 +13,7 @@ public interface WorkoutProgramRepository extends JpaRepository<WorkoutProgram, 
     List<WorkoutProgram> findByUser(AppUser user);
 
     Optional<WorkoutProgram> findByIdAndUser(Long id, AppUser user);
+
+    List<WorkoutProgram> findByUserAndEquipmentType(AppUser user, EquipmentType equipment);
 
 }

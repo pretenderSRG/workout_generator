@@ -11,6 +11,7 @@ import org.generator.workout.repository.WorkoutProgramRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,10 +31,14 @@ public class WorkoutGeneratorService {
         this.userRepository = userRepository;
     }
 
+    private AppUser verifyUser(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+    }
+
     public WorkoutProgramResponse generateProgram(Long userId, EquipmentType equipment, SplitType splitType, int daysPerWeek) {
         System.out.println("Generating program for user ID: " + userId);
-        AppUser user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        AppUser user = verifyUser(userId);
 
         List<Exercise> exercises =  exerciseRepository.findByEquipment(equipment);
 
@@ -93,8 +98,7 @@ public class WorkoutGeneratorService {
     }
 
     public List<WorkoutProgramResponse> getUserWorkoutProgram(Long userId) {
-        AppUser user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        AppUser user = verifyUser(userId);
 
         List<WorkoutProgram> programs = programRepository.findByUser(user);
 
@@ -135,8 +139,7 @@ public class WorkoutGeneratorService {
     }
 
     public WorkoutProgramResponse getWorkoutProgramById(Long userId, Long programId) {
-        AppUser user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        AppUser user = verifyUser(userId);
 
         WorkoutProgram program = programRepository.findByIdAndUser(programId, user)
                 .orElseThrow(() -> new IllegalArgumentException("Program not found or access denied: " + programId));
@@ -175,8 +178,7 @@ public class WorkoutGeneratorService {
     }
 
     public void deleteWorkoutProgramById(Long userId, Long programId) {
-        AppUser user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        AppUser user = verifyUser(userId);
 
        WorkoutProgram program = programRepository.findByIdAndUser(programId, user)
                .orElseThrow(() -> new IllegalArgumentException("Program not found or access denied: " + programId));
@@ -184,4 +186,55 @@ public class WorkoutGeneratorService {
        programRepository.delete(program);
 
     }
+
+    public List<WorkoutProgramResponse> getUserWorkoutProgramByEquipment(Long userId, EquipmentType equipment) {
+        AppUser user = verifyUser(userId);
+        List<WorkoutProgram> filteredWorkoutProgram = programRepository.findByUserAndEquipmentType(user, equipment);
+
+        return filteredWorkoutProgram.stream()
+                .map(program -> buildResponse(program, program.getEquipmentType(), program.getSplitType(),
+                        program.getDaysPerWeek())).toList();
+    }
+
+    private WorkoutProgramResponse buildResponse(WorkoutProgram program, EquipmentType equipment, SplitType splitType, int daysPerWeek) {
+
+        List<WorkoutDayResponse> dayResponses = program.getDays().stream()
+                .sorted(Comparator.comparing(WorkoutDay::getDayNumber))
+                .map(day -> {
+                    List<ExerciseInDayResponse> exerciseInDayResponses = day.getExercises().stream()
+                            .sorted(Comparator.comparing(ExerciseInDay::getOrderInDay))
+                            .map(exInDay -> new ExerciseInDayResponse(
+                                    exInDay.getId(),
+                                    new ExerciseResponse(
+                                            exInDay.getExercise().getId(),
+                                            exInDay.getExercise().getName(),
+                                            exInDay.getExercise().getDescription(),
+                                            exInDay.getExercise().getEquipment().name(),
+                                            exInDay.getExercise().getMuscleGroup().name(),
+                                            exInDay.getExercise().getReps(),
+                                            exInDay.getExercise().getSets()
+                                    ),
+                                    exInDay.getOrderInDay()
+                            ))
+                            .toList();
+
+                    return new WorkoutDayResponse(
+                            day.getId(),
+                            day.getDayNumber(),
+                            exerciseInDayResponses
+                    );
+                })
+                .toList();
+
+        return new WorkoutProgramResponse(
+                program.getId(),
+                program.getName(),
+                equipment.name(),
+                splitType.name(),
+                program.getDaysPerWeek(),
+                program.getCreatedAt(),
+                dayResponses
+        );
+    }
+
 }

@@ -1,13 +1,9 @@
 package org.generator.workout.controller;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import org.generator.workout.dto.WorkoutDayResponse;
 import org.generator.workout.model.SplitType;
-import org.generator.workout.model.WorkoutProgram;
 import org.generator.workout.repository.AppUserRepository;
-import org.generator.workout.repository.WorkoutProgramRepository;
 import org.generator.workout.service.SmartWorkoutGeneratorService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -52,6 +48,12 @@ public class WorkoutController {
     public WorkoutProgramResponse getWorkoutProgramById(@PathVariable Long id) {
 
         return generatorService.getWorkoutProgramById(getUserId(), id);
+    }
+
+    @GetMapping("/filter")
+    public List<WorkoutProgramResponse> getFilterWorkoutProgramByEquipment(@RequestParam EquipmentType equipment) {
+        return generatorService.getUserWorkoutProgramByEquipment(getUserId(),equipment);
+
     }
 
     @DeleteMapping("/{id}")
