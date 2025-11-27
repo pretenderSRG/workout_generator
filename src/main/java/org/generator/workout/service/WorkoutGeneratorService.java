@@ -8,9 +8,12 @@ import org.generator.workout.model.*;
 import org.generator.workout.repository.AppUserRepository;
 import org.generator.workout.repository.ExerciseRepository;
 import org.generator.workout.repository.WorkoutProgramRepository;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -97,12 +100,21 @@ public class WorkoutGeneratorService {
         );
     }
 
-    public List<WorkoutProgramResponse> getUserWorkoutProgram(Long userId, EquipmentType equipment, SplitType splitType) {
+    public List<WorkoutProgramResponse> getUserWorkoutProgram(Long userId,
+                                                              EquipmentType equipment,
+                                                              SplitType splitType,
+                                                              @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate createdAt) {
         AppUser user = verifyUser(userId);
 
         List<WorkoutProgram> programs;
 
-        if (equipment != null && splitType != null) {
+        if (equipment != null && splitType != null && createdAt != null) {
+            LocalDateTime startOfDay = createdAt.atStartOfDay();
+            programs = programRepository.findByUserAndEquipmentTypeAndSplitTypeAndCreatedAtAfter(user,
+                    equipment,
+                    splitType,
+                    startOfDay);
+        } else if (equipment != null && splitType != null) {
             programs = programRepository.findByUserAndEquipmentTypeAndSplitType(user, equipment, splitType);
         } else if (equipment != null) {
             programs = programRepository.findByUserAndEquipmentType(user, equipment);
@@ -112,13 +124,13 @@ public class WorkoutGeneratorService {
             programs = programRepository.findByUser(user);
         }
 
-            return programs.stream()
-                    .map(program -> buildResponse(
-                            program,
-                            program.getEquipmentType(),
-                            program.getSplitType(),
-                            program.getDaysPerWeek()
-                    )).toList();
+        return programs.stream()
+                .map(program -> buildResponse(
+                        program,
+                        program.getEquipmentType(),
+                        program.getSplitType(),
+                        program.getDaysPerWeek()
+                )).toList();
     }
 
     public WorkoutProgramResponse getWorkoutProgramById(Long userId, Long programId) {

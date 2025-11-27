@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Min;
 import org.generator.workout.model.SplitType;
 import org.generator.workout.repository.AppUserRepository;
 import org.generator.workout.service.SmartWorkoutGeneratorService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.generator.workout.dto.WorkoutProgramResponse;
@@ -13,6 +14,8 @@ import org.generator.workout.service.WorkoutGeneratorService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -41,8 +44,11 @@ public class WorkoutController {
 
     @GetMapping
     public List<WorkoutProgramResponse> getUserWorkoutPrograms(@RequestParam(required = false) EquipmentType equipment,
-                                                               @RequestParam(required = false) SplitType splitType) {
-        return generatorService.getUserWorkoutProgram(getUserId(), equipment, splitType);
+                                                               @RequestParam(required = false) SplitType splitType,
+                                                               @RequestParam(required = false)
+                                                                       @DateTimeFormat(pattern = "dd-MM-yyyy")
+                                                               LocalDate createdAt) {
+        return generatorService.getUserWorkoutProgram(getUserId(), equipment, splitType, createdAt);
     }
 
     @GetMapping("/{id}")
