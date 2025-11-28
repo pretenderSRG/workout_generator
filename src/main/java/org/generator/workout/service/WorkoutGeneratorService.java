@@ -8,6 +8,8 @@ import org.generator.workout.model.*;
 import org.generator.workout.repository.AppUserRepository;
 import org.generator.workout.repository.ExerciseRepository;
 import org.generator.workout.repository.WorkoutProgramRepository;
+import org.generator.workout.specefication.WorkoutProgramSpec;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -107,22 +109,13 @@ public class WorkoutGeneratorService {
         AppUser user = verifyUser(userId);
 
         List<WorkoutProgram> programs;
+        Specification<WorkoutProgram> spec = Specification
+                .where(WorkoutProgramSpec.hasUser(user))
+                .and(WorkoutProgramSpec.hasEquipmentType(equipment))
+                .and(WorkoutProgramSpec.hasSplitType(splitType))
+                .and(WorkoutProgramSpec.createdAtAfter(createdAt));
+        programs = programRepository.findAll(spec);
 
-        if (equipment != null && splitType != null && createdAt != null) {
-            LocalDateTime startOfDay = createdAt.atStartOfDay();
-            programs = programRepository.findByUserAndEquipmentTypeAndSplitTypeAndCreatedAtAfter(user,
-                    equipment,
-                    splitType,
-                    startOfDay);
-        } else if (equipment != null && splitType != null) {
-            programs = programRepository.findByUserAndEquipmentTypeAndSplitType(user, equipment, splitType);
-        } else if (equipment != null) {
-            programs = programRepository.findByUserAndEquipmentType(user, equipment);
-        } else if (splitType != null) {
-            programs = programRepository.findByUserAndSplitType(user, splitType);
-        } else {
-            programs = programRepository.findByUser(user);
-        }
 
         return programs.stream()
                 .map(program -> buildResponse(

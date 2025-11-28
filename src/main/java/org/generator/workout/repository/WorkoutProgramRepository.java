@@ -5,13 +5,13 @@ import org.generator.workout.model.EquipmentType;
 import org.generator.workout.model.SplitType;
 import org.generator.workout.model.WorkoutProgram;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-public interface WorkoutProgramRepository extends JpaRepository<WorkoutProgram, Long> {
-    List<WorkoutProgram> findByUser(AppUser user);
+public interface WorkoutProgramRepository extends JpaRepository<WorkoutProgram, Long>, JpaSpecificationExecutor<WorkoutProgram> {
 
     Optional<WorkoutProgram> findByIdAndUser(Long id, AppUser user);
 
@@ -21,8 +21,4 @@ public interface WorkoutProgramRepository extends JpaRepository<WorkoutProgram, 
 
     List<WorkoutProgram> findByUserAndEquipmentTypeAndSplitType(AppUser user, EquipmentType equipmentType, SplitType splitType);
 
-    List<WorkoutProgram> findByUserAndEquipmentTypeAndSplitTypeAndCreatedAtAfter(AppUser user,
-                                                                                 EquipmentType equipment,
-                                                                                 SplitType splitType,
-                                                                                 LocalDateTime createdAt);
 }
