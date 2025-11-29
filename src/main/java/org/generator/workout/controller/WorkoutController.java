@@ -47,8 +47,9 @@ public class WorkoutController {
                                                                @RequestParam(required = false) SplitType splitType,
                                                                @RequestParam(required = false)
                                                                        @DateTimeFormat(pattern = "dd-MM-yyyy")
-                                                               LocalDate createdAt) {
-        return generatorService.getUserWorkoutProgram(getUserId(), equipment, splitType, createdAt);
+                                                               LocalDate createdAt,
+                                                               @RequestParam(required = false) Integer daysPerWeek) {
+        return generatorService.getUserWorkoutProgram(getUserId(), equipment, splitType, createdAt, daysPerWeek);
     }
 
     @GetMapping("/{id}")

@@ -7,7 +7,6 @@ import org.generator.workout.model.WorkoutProgram;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 public class WorkoutProgramSpec {
     public static Specification<WorkoutProgram> hasUser(AppUser user) {
@@ -36,9 +35,16 @@ public class WorkoutProgramSpec {
                        criteriaBuilder.greaterThanOrEqualTo(root.get("createdAt"), date.atStartOfDay()));
     }
 
+    public static Specification<WorkoutProgram> hasDaysPerWeek(Integer daysPerWeek) {
+        return ((root, query, criteriaBuilder) ->
+                daysPerWeek == null ?
+                        criteriaBuilder.conjunction() :
+                        criteriaBuilder.equal(root.get("daysPerWeek"), daysPerWeek));
+    }
+
 
     public static Specification<WorkoutProgram> withFilters(AppUser user, EquipmentType equipmentType, SplitType splitType,
-                                                            LocalDate createdAt) {
+                                                            LocalDate createdAt, Integer daysPerWeek) {
         Specification<WorkoutProgram> spec = Specification.where(null);
 
         if (user != null) {
@@ -55,6 +61,10 @@ public class WorkoutProgramSpec {
 
         if (createdAt != null) {
             spec = spec.and(createdAtAfter(createdAt));
+        }
+
+        if (daysPerWeek != null) {
+            spec = spec.and(hasDaysPerWeek(daysPerWeek));
         }
 
         return spec;

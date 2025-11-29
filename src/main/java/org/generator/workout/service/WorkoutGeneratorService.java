@@ -105,7 +105,8 @@ public class WorkoutGeneratorService {
     public List<WorkoutProgramResponse> getUserWorkoutProgram(Long userId,
                                                               EquipmentType equipment,
                                                               SplitType splitType,
-                                                              @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate createdAt) {
+                                                              @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate createdAt,
+                                                              Integer daysPerWeek) {
         AppUser user = verifyUser(userId);
 
         List<WorkoutProgram> programs;
