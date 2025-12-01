@@ -9,6 +9,8 @@ import org.generator.workout.repository.AppUserRepository;
 import org.generator.workout.repository.ExerciseRepository;
 import org.generator.workout.repository.WorkoutProgramRepository;
 import org.generator.workout.specefication.WorkoutProgramSpec;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Service;
@@ -102,36 +104,38 @@ public class WorkoutGeneratorService {
         );
     }
 
-    public List<WorkoutProgramResponse> getUserWorkoutProgram(Long userId,
+    public Page<WorkoutProgramResponse> getUserWorkoutProgram(Long userId,
                                                               EquipmentType equipment,
                                                               SplitType splitType,
                                                               @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate createdAt,
-                                                              Integer daysPerWeek) {
+                                                              Integer daysPerWeek,
+                                                              Pageable pageable) {
         AppUser user = verifyUser(userId);
 
-        List<WorkoutProgram> programs;
+//        List<WorkoutProgram> programs;
         Specification<WorkoutProgram> spec = Specification
                 .where(WorkoutProgramSpec.hasUser(user))
                 .and(WorkoutProgramSpec.hasEquipmentType(equipment))
                 .and(WorkoutProgramSpec.hasSplitType(splitType))
-                .and(WorkoutProgramSpec.createdAtAfter(createdAt));
-        programs = programRepository.findAll(spec);
+                .and(WorkoutProgramSpec.createdAtAfter(createdAt))
+                .and(WorkoutProgramSpec.hasDaysPerWeek(daysPerWeek));
+        Page<WorkoutProgram> programPage = programRepository.findAll(spec, pageable);
 
 
-        return programs.stream()
+
+        return programPage
                 .map(program -> buildResponse(
                         program,
                         program.getEquipmentType(),
                         program.getSplitType(),
                         program.getDaysPerWeek()
-                )).toList();
+                ));
     }
 
     public WorkoutProgramResponse getWorkoutProgramById(Long userId, Long programId) {
         AppUser user = verifyUser(userId);
 
-        WorkoutProgram program = programRepository.findByIdAndUser(programId, user)
-                .orElseThrow(() -> new IllegalArgumentException("Program not found or access denied: " + programId));
+        WorkoutProgram program = programRepository.findByIdAndUser(programId, user);
 
         List<WorkoutDayResponse> dayResponses = program.getDays().stream()
                 .map(day -> new WorkoutDayResponse(
@@ -169,8 +173,7 @@ public class WorkoutGeneratorService {
     public void deleteWorkoutProgramById(Long userId, Long programId) {
         AppUser user = verifyUser(userId);
 
-        WorkoutProgram program = programRepository.findByIdAndUser(programId, user)
-                .orElseThrow(() -> new IllegalArgumentException("Program not found or access denied: " + programId));
+        WorkoutProgram program = programRepository.findByIdAndUser(programId, user);
 
         programRepository.delete(program);
 

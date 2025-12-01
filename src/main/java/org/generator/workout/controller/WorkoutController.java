@@ -5,6 +5,8 @@ import jakarta.validation.constraints.Min;
 import org.generator.workout.model.SplitType;
 import org.generator.workout.repository.AppUserRepository;
 import org.generator.workout.service.SmartWorkoutGeneratorService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -43,13 +45,16 @@ public class WorkoutController {
     }
 
     @GetMapping
-    public List<WorkoutProgramResponse> getUserWorkoutPrograms(@RequestParam(required = false) EquipmentType equipment,
-                                                               @RequestParam(required = false) SplitType splitType,
-                                                               @RequestParam(required = false)
+    public ResponseEntity<Page<WorkoutProgramResponse>> getUserWorkoutPrograms(@RequestParam(required = false) EquipmentType equipment,
+                                                                               @RequestParam(required = false) SplitType splitType,
+                                                                               @RequestParam(required = false)
                                                                        @DateTimeFormat(pattern = "dd-MM-yyyy")
                                                                LocalDate createdAt,
-                                                               @RequestParam(required = false) Integer daysPerWeek) {
-        return generatorService.getUserWorkoutProgram(getUserId(), equipment, splitType, createdAt, daysPerWeek);
+                                                                               @RequestParam(required = false) Integer daysPerWeek,
+                                                                               Pageable pageable) {
+        Page<WorkoutProgramResponse> programs = generatorService.getUserWorkoutProgram(getUserId(),
+                equipment, splitType, createdAt, daysPerWeek, pageable);
+        return ResponseEntity.ok(programs);
     }
 
     @GetMapping("/{id}")
