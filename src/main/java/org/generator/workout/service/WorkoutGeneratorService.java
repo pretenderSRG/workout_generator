@@ -4,6 +4,7 @@ import org.generator.workout.dto.ExerciseInDayResponse;
 import org.generator.workout.dto.ExerciseResponse;
 import org.generator.workout.dto.WorkoutDayResponse;
 import org.generator.workout.dto.WorkoutProgramResponse;
+import org.generator.workout.exception.EntityNotFoundException;
 import org.generator.workout.model.*;
 import org.generator.workout.repository.AppUserRepository;
 import org.generator.workout.repository.ExerciseRepository;
@@ -13,6 +14,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpMessage;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +23,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,7 +44,7 @@ public class WorkoutGeneratorService {
 
     private AppUser verifyUser(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+                .orElseThrow(() -> new EntityNotFoundException("User not found: " + userId));
     }
 
     public WorkoutProgramResponse generateProgram(Long userId, EquipmentType equipment, SplitType splitType, int daysPerWeek) {
@@ -135,45 +139,48 @@ public class WorkoutGeneratorService {
     public WorkoutProgramResponse getWorkoutProgramById(Long userId, Long programId) {
         AppUser user = verifyUser(userId);
 
-        WorkoutProgram program = programRepository.findByIdAndUser(programId, user);
-
-        List<WorkoutDayResponse> dayResponses = program.getDays().stream()
-                .map(day -> new WorkoutDayResponse(
-                        day.getId(),
-                        day.getDayNumber(),
-                        day.getExercises().stream()
-                                .map(exInDay -> new ExerciseInDayResponse(
-                                        exInDay.getId(),
-                                        new ExerciseResponse(
-                                                exInDay.getExercise().getId(),
-                                                exInDay.getExercise().getName(),
-                                                exInDay.getExercise().getDescription(),
-                                                exInDay.getExercise().getEquipment().name(),
-                                                exInDay.getExercise().getMuscleGroup().name(),
-                                                exInDay.getExercise().getReps(),
-                                                exInDay.getExercise().getSets()
-                                        ),
-                                        exInDay.getOrderInDay()
-                                ))
-                                .collect(Collectors.toList())
-                ))
-                .collect(Collectors.toList());
-
-        return new WorkoutProgramResponse(
-                program.getId(),
-                program.getName(),
-                program.getEquipmentType().name(),
-                program.getSplitType().name(),
-                program.getDaysPerWeek(),
-                program.getCreatedAt(),
-                dayResponses
+        WorkoutProgram program = programRepository.findByIdAndUser(programId, user).orElseThrow(
+                () -> new EntityNotFoundException("Workout program with ID " + programId + " not found for current user")
         );
+
+            List<WorkoutDayResponse> dayResponses =  program.getDays().stream()
+                    .map(day -> new WorkoutDayResponse(
+                            day.getId(),
+                            day.getDayNumber(),
+                            day.getExercises().stream()
+                                    .map(exInDay -> new ExerciseInDayResponse(
+                                            exInDay.getId(),
+                                            new ExerciseResponse(
+                                                    exInDay.getExercise().getId(),
+                                                    exInDay.getExercise().getName(),
+                                                    exInDay.getExercise().getDescription(),
+                                                    exInDay.getExercise().getEquipment().name(),
+                                                    exInDay.getExercise().getMuscleGroup().name(),
+                                                    exInDay.getExercise().getReps(),
+                                                    exInDay.getExercise().getSets()
+                                            ),
+                                            exInDay.getOrderInDay()
+                                    ))
+                                    .collect(Collectors.toList())
+                    ))
+                    .collect(Collectors.toList());
+
+            return new WorkoutProgramResponse(
+                    program.getId(),
+                    program.getName(),
+                    program.getEquipmentType().name(),
+                    program.getSplitType().name(),
+                    program.getDaysPerWeek(),
+                    program.getCreatedAt(),
+                    dayResponses
+            );
     }
 
     public void deleteWorkoutProgramById(Long userId, Long programId) {
         AppUser user = verifyUser(userId);
 
-        WorkoutProgram program = programRepository.findByIdAndUser(programId, user);
+        WorkoutProgram program = programRepository.findByIdAndUser(programId, user).orElseThrow(
+                () -> new EntityNotFoundException("Workout program with ID " + programId + " not found for current user"));
 
         programRepository.delete(program);
 

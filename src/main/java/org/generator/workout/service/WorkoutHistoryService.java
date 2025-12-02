@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.generator.workout.dto.HistoryExerciseResponse;
 import org.generator.workout.dto.RecordExerciseRequest;
 import org.generator.workout.dto.WorkoutHistoryResponse;
+import org.generator.workout.exception.EntityNotFoundException;
 import org.generator.workout.model.AppUser;
 import org.generator.workout.model.HistoryExercise;
 import org.generator.workout.model.WorkoutHistory;
@@ -32,10 +33,11 @@ public class WorkoutHistoryService {
     @Transactional
     public void recordWorkout(Long userId, Long programId, List<RecordExerciseRequest> exercises) {
         AppUser user =  userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+                .orElseThrow(() -> new EntityNotFoundException("User not found: " + userId));
 
-        WorkoutProgram program = workoutProgramRepository.findByIdAndUser(programId, user)
-                .orElseThrow(() -> new IllegalArgumentException("Program not found: " + programId));
+        WorkoutProgram program = workoutProgramRepository.findByIdAndUser(programId, user).orElseThrow(
+                () -> new EntityNotFoundException("Workout program with ID " + programId+ " not found for current user")
+        );
 
         WorkoutHistory history = new WorkoutHistory();
 

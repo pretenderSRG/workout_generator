@@ -17,12 +17,6 @@ import java.util.Optional;
 public interface WorkoutProgramRepository extends JpaRepository<WorkoutProgram, Long>, JpaSpecificationExecutor<WorkoutProgram> {
 
     Page<WorkoutProgram> findByIdAndUser(Long id, AppUser user, Pageable pageable);
-    WorkoutProgram findByIdAndUser(Long id, AppUser user);
-
-//    List<WorkoutProgram> findByUserAndEquipmentType(AppUser user, EquipmentType equipment);
-//
-//    List<WorkoutProgram> findByUserAndSplitType(AppUser user, SplitType splitType);
-//
-//    List<WorkoutProgram> findByUserAndEquipmentTypeAndSplitType(AppUser user, EquipmentType equipmentType, SplitType splitType);
+    Optional<WorkoutProgram> findByIdAndUser(Long id, AppUser user);
 
 }

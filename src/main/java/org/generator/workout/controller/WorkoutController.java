@@ -8,6 +8,7 @@ import org.generator.workout.service.SmartWorkoutGeneratorService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.generator.workout.dto.WorkoutProgramResponse;
@@ -58,9 +59,13 @@ public class WorkoutController {
     }
 
     @GetMapping("/{id}")
-    public WorkoutProgramResponse getWorkoutProgramById(@PathVariable Long id) {
-
-        return generatorService.getWorkoutProgramById(getUserId(), id);
+    public ResponseEntity<WorkoutProgramResponse> getWorkoutProgramById(@PathVariable Long id) {
+        try {
+            WorkoutProgramResponse response = generatorService.getWorkoutProgramById(getUserId(), id);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{id}")
