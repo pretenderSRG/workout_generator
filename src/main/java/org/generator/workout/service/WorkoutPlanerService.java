@@ -2,10 +2,6 @@ package org.generator.workout.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.generator.workout.dto.ExerciseInDayResponse;
-import org.generator.workout.dto.ExerciseResponse;
-import org.generator.workout.dto.WorkoutDayResponse;
-import org.generator.workout.dto.WorkoutProgramResponse;
 import org.generator.workout.model.*;
 import org.springframework.stereotype.Component;
 
