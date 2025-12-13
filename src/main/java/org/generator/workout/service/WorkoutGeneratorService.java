@@ -1,5 +1,6 @@
 package org.generator.workout.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.generator.workout.dto.ExerciseInDayResponse;
 import org.generator.workout.dto.ExerciseResponse;
 import org.generator.workout.dto.WorkoutDayResponse;
@@ -14,18 +15,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpMessage;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @Transactional
 public class WorkoutGeneratorService {
@@ -48,7 +46,7 @@ public class WorkoutGeneratorService {
     }
 
     public WorkoutProgramResponse generateProgram(Long userId, EquipmentType equipment, SplitType splitType, int daysPerWeek) {
-        System.out.println("Generating program for user ID: " + userId);
+        log.info("Generating program for user ID: {}", userId);
         AppUser user = verifyUser(userId);
 
         List<Exercise> exercises = exerciseRepository.findByEquipment(equipment);

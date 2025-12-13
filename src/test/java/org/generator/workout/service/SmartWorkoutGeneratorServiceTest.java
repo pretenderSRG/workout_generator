@@ -46,8 +46,8 @@ public class SmartWorkoutGeneratorServiceTest {
 
     @BeforeEach
     void setUp() {
-       AppUser user = TestDataFactory.createUser();
-       List<Exercise> exercises = TestDataFactory.createBodyweightExercise();
+       user = TestDataFactory.createUser();
+       exercises = TestDataFactory.createBodyweightExercise();
     }
 
     @Test
@@ -65,25 +65,26 @@ public class SmartWorkoutGeneratorServiceTest {
     @Test
     void shouldGenerateProgramSuccessfully() {
         // arrange
-        WorkoutProgram tempProgram = new WorkoutProgram();
+       when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+       when(exerciseRepository.findByEquipment(EquipmentType.BODYWEIGHT)).thenReturn(exercises);
 
-        WorkoutDay day1 = new WorkoutDay(1, tempProgram);
-        WorkoutDay day2 = new WorkoutDay(2, tempProgram);
-        WorkoutDay day3 = new WorkoutDay(3, tempProgram);
+       WorkoutProgram tempProgram = new WorkoutProgram();
+       tempProgram.setId(999L);
 
+       // create 3 days with TestDataFactory
+       WorkoutDay day1 = TestDataFactory.createWorkoutDay(1, tempProgram, List.of(exercises.get(0)));
+       WorkoutDay day2 = TestDataFactory.createWorkoutDay(2, tempProgram, List.of(exercises.get(2)));
+       WorkoutDay day3 = TestDataFactory.createWorkoutDay(3, tempProgram, List.of(exercises.get(4)));
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(exerciseRepository.findByEquipment(EquipmentType.BODYWEIGHT)).thenReturn(exercises);
+       when(workoutPlanerService.planDays(exercises, 3, SplitType.PPL))
+               .thenReturn(Arrays.asList(day1, day2, day3));
 
-    when(workoutPlanerService.planDays(exercises, 3, SplitType.PPL))
-            .thenReturn(Arrays.asList(day1, day2, day3));
-
-        when(programRepository.save(any(WorkoutProgram.class))).thenAnswer(invocation -> {
-            WorkoutProgram program = invocation.getArgument(0);
-            program.setId(100L);
-            program.setCreatedAt(LocalDateTime.of(2025, 12, 4, 10, 0));
-            return program;
-        });
+       when(programRepository.save(any(WorkoutProgram.class))).thenAnswer(invocation -> {
+           WorkoutProgram program = invocation.getArgument(0);
+           program.setId(100L);
+           program.setCreatedAt(LocalDateTime.of(2025, 12, 4, 10, 0));
+           return program;
+       });
 
         // act
         WorkoutProgramResponse response = service.generateSmartProgram(1L, EquipmentType.BODYWEIGHT, SplitType.PPL, 3);
