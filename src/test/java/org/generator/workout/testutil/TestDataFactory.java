@@ -1,5 +1,6 @@
 package org.generator.workout.testutil;
 
+import org.generator.workout.dto.WorkoutProgramResponse;
 import org.generator.workout.model.*;
 
 import java.time.LocalDateTime;
@@ -54,6 +55,20 @@ public class TestDataFactory {
             program.getDays().add(day);
         }
          return program;
+    }
+
+    public static WorkoutProgramResponse createWorkoutProgramResponse(Long id, String name, String equipment, String splitType, int daysPerWeek) {
+
+        WorkoutProgramResponse response = new WorkoutProgramResponse();
+        response.setId(id);
+        response.setName(name);
+        response.setEquipmentType(equipment);
+        response.setSplitType(splitType);
+        response.setDaysPerWeek(daysPerWeek);
+        response.setCreatedAt(LocalDateTime.now());
+        response.setDays(List.of());
+
+        return response;
     }
 
 }

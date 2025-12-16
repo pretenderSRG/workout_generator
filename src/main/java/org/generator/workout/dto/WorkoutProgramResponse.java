@@ -1,6 +1,7 @@
 package org.generator.workout.dto;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.generator.workout.model.SplitType;
 import org.generator.workout.model.WorkoutDay;
@@ -10,6 +11,7 @@ import java.util.List;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class WorkoutProgramResponse {
     private Long id;
     private String name;
