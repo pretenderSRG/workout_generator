@@ -154,7 +154,7 @@ public class WorkoutControllerTest {
                 .thenReturn(response);
 
         // act & assert
-        mockMvc.perform(post("/api/workouts/generate")
+        mockMvc.perform(post("/api/workouts/generate-smart")
                         .param("equipment", "GYM")
                         .param("splitType", "FB")
                         .param("daysPerWeek", "2")
